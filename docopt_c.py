@@ -17,6 +17,9 @@ Options:
                 If not present, the produced code is printed to stdout.
   -t, --template=<template>
                 Filename used to read a C template.
+  -H, --header
+                Output a header file. Must be used with --output-name.
+                Changes the extension of <outname> to .h
   -h,--help     Show this help message and exit.
 
 Arguments:
@@ -133,6 +136,9 @@ def parse_leafs(pattern, all_options):
 if __name__ == '__main__':
     args = docopt.docopt(__doc__)
 
+    if args['--header'] and args['--output-name'] is None:
+       sys.exit(ValueError("If using --header, you must specify a path in <docopt>"))
+
     try:
         if args['<docopt>'] is not None:
             with open(args['<docopt>'], 'r') as f:
@@ -197,7 +203,15 @@ if __name__ == '__main__':
     t_if_flag = ''.join(c_if_flag(flag) for flag in flags)
     t_if_option = ''.join(c_if_option(opt) for opt in options)
 
-    out = Template(args['--template']).safe_substitute(
+
+    template_c = args['--template']
+    if(args['--header']):
+        header_name = re.sub(r"\.c$",".h",args['--output-name'])
+        template_c = re.sub(r'\ntypedef struct {.*DocoptArgs;\n',"#include \"%s\"" % header_name,
+                            template_c, flags = re.DOTALL|re.MULTILINE)
+    template_c = Template(template_c)
+
+    out = template_c.safe_substitute(
             commands=t_commands,
             arguments=t_arguments,
             flags=t_flags,
@@ -220,5 +234,17 @@ if __name__ == '__main__':
         try:
             with open(args['--output-name'], 'w') as f:
                 f.write(out.strip() + '\n')
+            if(args['--header']):
+                template_h = ""
+                with open("template.h", 'r') as f:
+                    template_h = f.read()
+                out_h = Template(template_h).safe_substitute(
+                    commands=t_commands,
+                    arguments=t_arguments,
+                    flags=t_flags,
+                    options=t_options)
+                with open(header_name, 'w') as f:
+                    f.write(out_h.strip() + '\n')
+
         except IOError as e:
             sys.exit(str(e))

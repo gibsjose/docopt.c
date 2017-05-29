@@ -9,32 +9,7 @@
 #include <string.h>
 #endif
 
-
-typedef struct {
-    /* commands */
-    int create;
-    int mine;
-    int move;
-    int remove;
-    int set;
-    int ship;
-    int shoot;
-    /* arguments */
-    char *name;
-    char *x;
-    char *y;
-    /* options without arguments */
-    int drifting;
-    int help;
-    int moored;
-    int version;
-    /* options with arguments */
-    char *speed;
-    /* special */
-    const char *usage_pattern;
-    const char *help_message;
-} DocoptArgs;
-
+#include "docopt.h"
 const char help_message[] =
 "Naval Fate.\n"
 "\n"
@@ -267,6 +242,10 @@ int elems_to_args(Elements *elements, DocoptArgs *args, bool help,
     Option *option;
     int i;
 
+    // fix gcc-related compiler warnings (unused)
+    (void)command;
+    (void)argument;
+
     /* options */
     for (i=0; i < elements->n_options; i++) {
         option = &elements->options[i];
@@ -364,4 +343,3 @@ DocoptArgs docopt(int argc, char *argv[], bool help, const char *version) {
         exit(EXIT_SUCCESS);
     return args;
 }
-
