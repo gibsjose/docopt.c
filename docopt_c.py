@@ -137,7 +137,8 @@ if __name__ == '__main__':
     args = docopt.docopt(__doc__)
 
     if args['--header'] and args['--output-name'] is None:
-       sys.exit(ValueError("If using --header, you must specify a path in <docopt>"))
+        sys.exit(ValueError("If using --header, you must specify a path in <docopt>"))
+        template_h_path = ""
 
     try:
         if args['<docopt>'] is not None:
@@ -151,8 +152,12 @@ if __name__ == '__main__':
         if args['--template'] is None:
             args['--template'] = os.path.join(
                     os.path.dirname(os.path.realpath(__file__)), "template.c")
+        template_h_path = re.sub(r'\.c$', '.h', args['--template'])
         with open(args['--template'], 'r') as f:
                 args['--template'] = f.read()
+        if args['--header']:
+            with open(template_h_path, 'r') as f:
+                template_h = f.read()
     except IOError as e:
         sys.exit(e)
 
@@ -235,9 +240,6 @@ if __name__ == '__main__':
             with open(args['--output-name'], 'w') as f:
                 f.write(out.strip() + '\n')
             if(args['--header']):
-                template_h = ""
-                with open("template.h", 'r') as f:
-                    template_h = f.read()
                 out_h = Template(template_h).safe_substitute(
                     commands=t_commands,
                     arguments=t_arguments,
